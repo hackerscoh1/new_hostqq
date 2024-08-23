@@ -18,6 +18,13 @@ import time
 import pytz
 from datetime import datetime,timedelta
 import random
+usee=[2137830085]
+@app.on_message(filters.command("ai", prefixes=".")&  filters.user(usee) )
+async def handle_bro(client, message):
+    text_to_generate = message.text.split(".ai", 1)[1].strip()
+    # if text_to_generate:
+        # generated_text = generate_ask(text_to_generate)
+    await message.reply('alive')
 async def change_name():
     while True:
         
