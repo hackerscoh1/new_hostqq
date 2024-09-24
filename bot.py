@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 import requests
 import random
 import urllib.parse
+import tempfile
 
 api_id = '25593180'
 api_hash = 'b58bd82141f66e627ba6c4eb480a3dd3'
@@ -129,17 +130,73 @@ async def handle_bro(client, message):
     else:
         await message.reply_text("reply")
 
+@app.on_message(filters.command("img", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+async def handle_bro(client, message):
+    prompt=message.text.split(".img", 1)[1].strip()
+    api_url = f"https://aiimage.ukefuehatwo.workers.dev/?prompt={prompt}"
+    try:
+        # Send a request to the API to get the generated image
+        response = requests.get(api_url)
+
+        if response.status_code == 200:
+            # Save the image to a file
+            with open("generated_image.png", "wb") as f:
+                f.write(response.content)
+            
+            # Send the image to the user
+            await client.send_photo(message.chat.id, "generated_image.png", caption=f"Generated image for: {prompt}",reply_to_message_id=message.id )
+        else:
+            await message.reply_text("Failed to generate the image. Try again later.")
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
+
+
+async def extract_text_from_image(client, file_id):
+    with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
+        await client.download_media(file_id, file_name=temp_file.name)
+        with open(temp_file.name, 'rb') as image_file_descriptor:
+            files = {'image': image_file_descriptor}
+            api_urll = 'https://api.api-ninjas.com/v1/imagetotext'
+            r = requests.post(api_urll, files=files)
+        if r.status_code == 200:
+            data = r.json()
+            all_text = " ".join([item['text'] for item in data])
+            return all_text if all_text.strip() else "No text found in the image."
+        else:
+            return "Failed to process the image. Please try again."
+
+@app.on_message(filters.command("text", prefixes=".") & (filters.photo & filters.caption) | (filters.reply & filters.text)   &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_text_extraction(client, message):
+    if message.caption == ".text" or message.text == ".text":
+        if message.photo:
+            photo = message.photo
+        elif message.reply_to_message and message.reply_to_message.photo:
+            photo = message.reply_to_message.photo
+        else:
+            await message.reply("Please send a valid image with the `.text` command.")
+            return
+        extracted_text = await extract_text_from_image(client, photo.file_id)
+        if extracted_text:
+            generated_text =  generate_ask(extracted_text)
+            # k=
+            await message.reply(f'**extracted text:**\n{extracted_text}\n\n**Answer:**\n __{generated_text}__ ')
+        else:
+            await message.reply("No text was extracted from the image.")
+
 @app.on_message(filters.command("al", prefixes=".")&  filters.user(usee) )
 async def handle_bro(client, message):
     await message.reply('Im alive')
+
+
 async def change_name():
     while True:
         try:
-            current_time = time.strftime("%H:%M:%S")
-            utc_time = datetime.utcnow()
-            ist = pytz.timezone('Asia/Kolkata')
-            ti=(utc_time.astimezone(ist)+ timedelta(minutes=1)).strftime("%I:%M %p")
-            await app.update_profile(last_name=ti)
+            # current_time = time.strftime("%H:%M:%S")
+            # utc_time = datetime.utcnow()
+            # ist = pytz.timezone('Asia/Kolkata')
+            # ti=(utc_time.astimezone(ist)+ timedelta(minutes=1)).strftime("%I:%M %p")
+            # await app.update_profile(last_name=ti)
+            pass
         except Exception as e:
             await app.send_message(-10020965765, e)
         await asyncio.sleep(60) 
