@@ -195,6 +195,64 @@ async def handle_bro(client, message):
     else:
         await message.reply("Error:")
 
+
+@app.on_message(filters.command("tor", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    q = message.text.split(".tor", 1)[1].strip()
+    try:
+        k = requests.get(f'https://itorrentsearch.vercel.app/api/yts/{q}')
+        
+        # Check the status code to handle any request errors
+        if k.status_code == 200:
+            l = k.json()
+            if "error" in l:
+                await message.reply(f"Error: {l['error']}")
+            else:
+                names = [file["Name"].lower() for file in l]
+                e = []
+                q=q.lower()
+                
+                if q in names:
+                    e.append(names.index(q))
+                else:
+                    for i in names:
+                        if q in i:
+                            e.append(i.index(q))
+                
+                if len(e) > 0:
+                    # await message.reply('Exact match found')
+                    match = l[e[0]]
+                else:
+                    await message.reply('exact match not found')
+                    match=l[0]
+                name = match.get("Name", "N/A")
+                released_date = match.get("ReleasedDate", "N/A")
+                genre = match.get("Genre", "N/A")
+                runtime = match.get("Runtime", "N/A")
+                language = match.get("Language", "N/A")
+                first_file = match["Files"][0] if match.get("Files") else {}
+                file_size = first_file.get("Size", "N/A")
+                magnet_link = first_file.get("Magnet", "N/A")
+                reply_message = (
+                    f"**Name:** __{name}__\n"
+                    f"**Released Date:** __{released_date}__\n"
+                    f"**Genre:** __{genre}__\n"
+                    f"**Runtime:** __{runtime}__\n"
+                    f"**Language:** __{language}__\n"
+                    f"**File Size:** __{file_size}__\n"
+                    f"**Magnet Link:** ```\n{magnet_link}\n```"
+                    f"\ncopy code and paste in utorrent* lite web or any torrent* app\nuse vpn for safety purpose"
+                )
+
+                await message.reply(reply_message)
+
+        else:
+            await message.reply(f"Error: Status code {k.status_code}")
+    except Exception as ex:
+        await message.reply(f"An error occurred: {str(ex)}")
+
+
+
 @app.on_message(filters.command("al", prefixes=".")&  filters.user(usee) )
 async def handle_bro(client, message):
     await message.reply('Im alive')
