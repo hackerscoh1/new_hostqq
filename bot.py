@@ -166,34 +166,22 @@ async def extract_text_from_image(client, file_id):
         else:
             return "Failed to process the image. Please try again."
 
-@app.on_message(filters.command("text", prefixes=".") & (filters.photo & filters.caption) | (filters.reply & filters.text)   &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
-async def handle_text_extraction(client, message):
-    if message.caption == ".text" or message.text == ".text":
-        if message.photo:
-            photo = message.photo
-        elif message.reply_to_message and message.reply_to_message.photo:
-            photo = message.reply_to_message.photo
-        else:
-            await message.reply("Please send a valid image with the `.text` command.")
-            return
-        extracted_text = await extract_text_from_image(client, photo.file_id)
-        if extracted_text:
-            generated_text =  generate_ask(extracted_text)
-            # k=
-            await message.reply(f'**extracted text:**\n{extracted_text}\n\n**Answer:**\n __{generated_text}__ ')
-        else:
-            await message.reply("No text was extracted from the image.")
+
 
 @app.on_message(filters.command("quote", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
-async def handle_bro(client, message):
+async def handle_broooo(client, message):
     api_url = 'https://api.api-ninjas.com/v1/quotes?'
-    response = requests.get(api_url, headers={'X-Api-Key': 'A8m7h4XKrRDAdWf0AvgcHg==6P5pAiJiswiB90nB'})
-    if response.status_code == requests.codes.ok:
-        resu=json.loads(response.text)[0]
-        # print(json.loads(resu)[0]['fact'])
-        await message.reply(resu['quote']+'\n\n  \t\t- -'+resu['author'])
-    else:
-        await message.reply("Error:")
+    try:
+        response = requests.get(api_url, headers={'X-Api-Key': 'A8m7h4XKrRDAdWf0AvgcHg==6P5pAiJiswiB90nB'})
+        if response.status_code == requests.codes.ok:
+            resu=json.loads(response.text)[0]
+            # print(json.loads(resu)[0]['fact'])
+            await message.reply(resu['quote']+'\n\n  \t\t- -'+resu['author'])
+        else:
+            await message.reply("Error:")
+    except Exception as e:
+        # General catch-all for any other exceptions
+        await message.reply(f"An unexpected error occurred: {str(e)}")
 @app.on_message(filters.command("fact", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
     q=message.text.split(".fact", 1)[1].strip()
@@ -266,7 +254,23 @@ async def handle_bro(client, message):
 @app.on_message(filters.command("al", prefixes=".")&  filters.user(usee) )
 async def handle_bro(client, message):
     await message.reply('Im alive')
-
+@app.on_message(filters.command("text", prefixes=".") & (filters.photo & filters.caption) | (filters.reply & filters.text)   &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_text_extraction(client, message):
+    if message.caption == ".text" or message.text == ".text":
+        if message.photo:
+            photo = message.photo
+        elif message.reply_to_message and message.reply_to_message.photo:
+            photo = message.reply_to_message.photo
+        else:
+            await message.reply("Please send a valid image with the `.text` command.")
+            return
+        extracted_text = await extract_text_from_image(client, photo.file_id)
+        if extracted_text:
+            generated_text =  generate_ask(extracted_text)
+            # k=
+            await message.reply(f'**extracted text:**\n{extracted_text}\n\n**Answer:**\n __{generated_text}__ ')
+        else:
+            await message.reply("No text was extracted from the image.")
 
 async def change_name():
     while True:
