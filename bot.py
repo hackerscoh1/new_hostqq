@@ -194,6 +194,16 @@ async def handle_bro(client, message):
         await message.reply(resu['quote']+'\n\n  \t\t- -'+resu['author'])
     else:
         await message.reply("Error:")
+@app.on_message(filters.command("fact", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    q=message.text.split(".fact", 1)[1].strip()
+    api_url = 'https://factapi-lovat.vercel.app/ask?fact='+q
+    r = requests.get(api_url)
+    if r.status_code == requests.codes.ok:
+        ans=r.json().get('answer')
+        await message.reply(ans)
+    else:
+        await message.reply("Error:")
 
 
 @app.on_message(filters.command("tor", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
