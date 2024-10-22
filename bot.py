@@ -505,7 +505,7 @@ async def change_name():
             # await app.update_profile(last_name=ti)
             pass
         except Exception as e:
-            await app.send_message(-10020965765, e)
+            await app.send_message(-1002096576575, e)
         await asyncio.sleep(60) 
 async def main():
     async with app:
