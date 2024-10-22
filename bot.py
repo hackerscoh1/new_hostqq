@@ -1,18 +1,21 @@
-from pyrogram import Client, filters
+from pyrogram import Client, filters,enums
 import requests
 import random
 import urllib.parse
 import tempfile
 import json
+import google.generativeai as genai
+import PIL.Image
+import os
 
 api_id = '25593180'
 api_hash = 'b58bd82141f66e627ba6c4eb480a3dd3'
 
 idd=[-1002096576575,-1001274621302,-1001663227286,-1002092572217,-1001539384652,-1002111908493]
-usee=[2137830085]
+usee=[2137830085,1093904450]
 group_chat_id=[-1002096576575]
 gcuser=[1300094147, 7098528110, 6536321026, 1404100466,1940516602,7267977568, 1243309538, 1091063475, 7386297062,2003954754]
-
+API_KEY= 'AIzaSyC5O8_pS9mXjS7e_-sn_Ln3LmHOXB7RYro'
 app = Client("user", api_id, api_hash)
 from pyrogram.raw import functions, types
 from pyrogram import  Client, filters
@@ -21,8 +24,15 @@ import time
 import pytz
 from datetime import datetime,timedelta
 import random
-usee=[2137830085]
-
+# usee=[2137830085]
+generation_config_cook = {
+  "temperature": 0.35,
+  "top_p": 0.95,
+  "top_k": 40,
+  "max_output_tokens": 1024,
+    }
+model_cook = genai.GenerativeModel(model_name="gemini-1.5-flash",
+                              generation_config=generation_config_cook)
 
 def validate_num(num, country):
     try:
@@ -61,6 +71,21 @@ def generate_black(question):
             return 'Failed to generate text'
     except Exception as e:
         return 'Failed to generate text. Please try again later.'
+
+@app.on_message(filters.command("id", prefixes=".") & filters.user(usee) )
+def user_info_command(bot, update):
+    try:
+        if update.reply_to_message:
+            reply_message = update.reply_to_message
+            user_id = reply_message.from_user.id
+            chat_id = update.chat.id
+            # group_id = update.chat.id if update.chat.type in ["group", "supergroup"] else None
+
+            update.reply_text(f"User ID: {user_id}\nChat ID: {chat_id}")
+        else:
+            update.reply_text("Please reply to a message to get the user ID, chat ID")
+    except IndexError:
+        update.reply_text("Please provide a user ID.")
 
 @app.on_message(filters.command("num", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
@@ -249,9 +274,207 @@ async def handle_bro(client, message):
     except Exception as ex:
         await message.reply(f"An error occurred: {str(ex)}")
 
+# -------------------------------------------------
+@app.on_message(filters.command("web", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    # q=message.text.split(".web", 1)[1].strip()
+    if len(message.command) > 1:
+        q = message.text.split(maxsplit=1)[1]
+    elif message.reply_to_message:
+        q = message.reply_to_message.text
+    else:
+        await message.reply_text(
+        f"<b>Usage: </b><code>.web [prompt/reply to message]</code>"
+    )
+        return
+    api_url = 'https://webacesapi.vercel.app/search?query='+q
+    api_url = 'https://webacesapi.onrender.com/search?query='+q
+    i=await message.reply_text("<code>Wait it takes some time for response...</code>")
+    r = requests.get(api_url)
+    i.delete()
+    if r.status_code == requests.codes.ok:
+        ans=r.json().get('response')
+        await message.reply(ans)
+    else:
+        await message.reply("Error:",r.status_code)
+
+# -------------------------------------------------
+genai.configure(api_key=API_KEY)
+
+model = genai.GenerativeModel("gemini-1.5-flash")
+@app.on_message(filters.command(["gem",'gemini'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    # q=message.text.split(".gem", 1)[1].strip()
+    try:
+        # i = await message.reply_text("<code>Please Wait...</code>")
+        if len(message.command) > 1:
+         prompt = message.text.split(maxsplit=1)[1]
+        elif message.reply_to_message:
+         prompt = message.reply_to_message.text
+        else:
+         await message.reply_text(
+            f"<b>Usage: </b><code>.gem [prompt/reply to message]</code>"
+        )
+         return
+    
+        chat = model.start_chat()
+        response = chat.send_message(prompt)
+        # i.delete()
+    
+        await message.reply_text(f"{response.text}", parse_mode=enums.ParseMode.MARKDOWN)
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
+# -------------------------------------------------
+@app.on_message(filters.command(["get",'info'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    try:
+        i = await message.reply_text("<code> Wait...</code>")
+
+        base_img = await message.reply_to_message.download()
+
+        img = PIL.Image.open(base_img)
+
+        response = model.generate_content(img)
+        # print(response)
+        await i.delete()
+
+        await message.reply_text(
+            f"**Detail Of Image:** {response.parts[0].text}", parse_mode=enums.ParseMode.MARKDOWN
+        )
+        os.remove(base_img)
+    except Exception as e:
+        await i.delete()
+        await message.reply_text(e)
+
+# -------------------------------------------------
+@app.on_message(filters.command(["cook",'aicook'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    try:
+        i = await message.reply_text("<code>Cooking...</code>")
+
+        base_img = await message.reply_to_message.download()
+
+        img = PIL.Image.open(base_img)
+        cook_img = [
+        "Accurately identify the baked good in the image and provide an appropriate and recipe consistent with your analysis. ",
+        img,
+        ]
+
+        response = model_cook.generate_content(cook_img)
+        await i.delete()
+
+        await message.reply_text(
+            f"{response.text}", parse_mode=enums.ParseMode.MARKDOWN
+        )
+        os.remove(base_img)
+    except Exception as e:
+        await i.delete()
+        await message.reply_text(e)
+# -------------------------------------------------
+@app.on_message(filters.command(["down",'d'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    try:
+        i = await message.reply_text("<code>downloading...</code>")
+        if len(message.command) > 1:
+         prompt = message.text.split(maxsplit=1)[1]
+        elif message.reply_to_message:
+         prompt = message.reply_to_message.text
+        else:
+         await message.reply_text(
+            f"<b>Usage: </b><code>.down [prompt/reply to message]</code>"
+        )
+         return
+        url = "https://ugly-merrile-mahee-2d0a2ff4.koyeb.app/"  # Replace with your API endpoint
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "url": prompt,  # Replace with the actual URL
+            "videoQuality": "1080",
+            "audioFormat": "mp3",
+            "audioBitrate": "128",
+            "filenameStyle": "classic",
+            "downloadMode": "auto",
+            "youtubeVideoCodec": "h264",
+            "youtubeDubLang": "en",
+            "alwaysProxy": False,
+            "disableMetadata": False
+        }
+
+        response = requests.post(url, headers=headers, json=data).json()
+        message_text = (
+        "**Status:** {}\n"
+        "🎥 File: {}\n\n" 
+        "[Click to view the video]({})\n\n"
+            ).format(response.get('status'),response.get("filename"),response.get("url"))
+        await i.delete()
+
+        await message.reply_text(text=message_text, parse_mode=enums.ParseMode.MARKDOWN)
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
+# -------------------------------------------------
+@app.on_message(filters.command("gita", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    try:
+        # i = await message.reply_text("<code>Please Wait...</code>")
+        if len(message.command) > 1:
+         prompt = message.text.split(maxsplit=1)[1]
+        elif message.reply_to_message:
+         prompt = message.reply_to_message.text
+        else:
+         await message.reply_text(
+            f"<b>Usage: </b><code>.gita [prompt/reply to message]</code>"
+        )
+         return
+        r=requests.get('https://api.mygitagpt.com/api/v1/gpt/campaign?prompt=hi')
+        text= r.content.decode()
+    
+        await message.reply_text(f"{text}", parse_mode=enums.ParseMode.MARKDOWN)
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
 
 
-@app.on_message(filters.command("al", prefixes=".")&  filters.user(usee) )
+
+        
+
+# -------------------------------------------------
+
+@app.on_message(filters.command(["h",'help','cmds','commands'], prefixes=".")&    (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    help_text = (
+        "🤖 **Available Commands**\n\n"
+        
+        "**Text-related Commands:**\n"
+        "1. `.ai` - ChatGPT response.\n"
+        "2. `.gita` - Bhagavad Gita response.\n"
+        "3. `.gem` / `.gemini` - Gemini AI response.\n"
+        "4. `.web` - Web access GPT.\n"
+        "5. `.b` - Unrestricted content.\n"
+        "6. `.air` - Add reply text and given text.\n\n"
+        
+        "**Image-related Commands** __(Reply to an image)__:\n"
+        "1. `.img` - Image generation.\n"
+        "2. `.text` - Extract text from image.\n"
+        "3. `.get` / `.info` - Get information about image.\n"
+        "4. `.cook` - Get recipe for item in image.\n\n"
+        
+        "**Other Commands:**\n"
+        "1. `.down` / `.d` - Download any video from a given URL __(e.g., Insta, X,fb,tiktok,snap,vimeo and so on)__.\n"
+        "2. `.num 9998881234` - Check phone number validation.\n"
+        "3. `.tor Kalki 2898 AD` - Get Tor link for the query.\n"
+        "4. `.quote` - Get a random quote.\n"
+        "5. `.fact` - Get a random fact.\n"
+        '6 `.al` - Check if the bot is alive.\n'
+        "7. `.h`, `.help`, `.cmds` - Show this help message."
+    )
+    await message.reply(help_text)
+@app.on_message(filters.private & ~filters.user(usee))
+def forward_private_messages(client, message):
+    # Forward the incoming private message to the target group
+    client.forward_messages(chat_id=-1002096576575, from_chat_id=message.chat.id, message_ids=message.id)
+    # print(f"Message from {message.chat.id} forwarded to group {-1002096576575}.")
+@app.on_message(filters.command("al", prefixes=".") )
 async def handle_bro(client, message):
     await message.reply('Im alive')
 @app.on_message(filters.command("text", prefixes=".") & (filters.photo & filters.caption) | (filters.reply & filters.text)   &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
