@@ -7,6 +7,9 @@ import json
 import google.generativeai as genai
 import PIL.Image
 import os
+from pytgcalls import PyTgCalls,idle,filters as fl
+from pytgcalls.exceptions import GroupCallNotFound
+from pytgcalls.types import MediaStream,ChatUpdate,Update
 
 api_id = '25593180'
 api_hash = 'b58bd82141f66e627ba6c4eb480a3dd3'
@@ -109,6 +112,81 @@ async def handle_bro(client, message):
                 f"- **Line Type:** {result.get('line_type', 'N/A')}\n"
             )
         await message.reply(response_message)
+call_py = PyTgCalls(app)
+@app.on_message(filters.command("py", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    chat_id = message.chat.id
+    reply = message.reply_to_message
+    
+    # Check if the replied message contains an audio or video file
+    if reply.audio or reply.voice:
+        media = reply.audio or reply.voice
+        await message.reply("Downloading audio...")
+        media_file = await client.download_media(media, file_name=f"{media.file_id}.mp3")
+        # media_stream = AudioPiped(media_file)
+        media_stream= MediaStream(media_file,)
+    elif reply.video:
+        media = reply.video
+        i=await message.reply("Downloading video...")
+        media_file = await client.download_media(media, file_name=f"{media.file_id}.mp4")
+        media_stream = MediaStream(media_file)
+    else:
+        await message.reply("Please reply to an audio or video file.")
+        return
+
+    try:
+        await i.delete()
+        await call_py.play(chat_id, media_stream)
+        await message.reply("Playing...")
+        @call_py.on_update(fl.stream_end)
+        async def stream_end_handler(_: PyTgCalls, update: Update):
+            if update.chat_id == chat_id:
+                # print(f'Stream ended in {update.chat_id}')
+                await call_py.leave_call(chat_id)
+                await message.reply("finished now sleep")
+    except GroupCallNotFound:
+        await message.reply("Could not join the vc")
+    if os.path.exists(media_file):
+        os.remove(media_file)
+@app.on_message(filters.command("pause", prefixes=".") & (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def pause_handler(client, message):
+    try:
+        await call_py.pause_stream(message.chat.id)
+        await message.reply("Paused")
+    except Exception as e:
+        pass
+        # await message.reply(f"Error pausing the stream: {str(e)}")
+
+
+@app.on_message(filters.command("resume", prefixes=".") & (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def resume_handler(client, message):
+    try:
+        await call_py.resume_stream(message.chat.id)
+        await message.reply("Resumed")
+    except Exception as e:
+        pass
+        # await message.reply(f"Error resuming the stream: {str(e)}")
+
+
+@app.on_message(filters.command(['stop', 'end'], prefixes=".") & (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def stop_handler(client, message):
+    try:
+        await call_py.leave_call(message.chat.id)
+        await message.reply("Stopped")
+    except Exception as e:
+        pass
+        # await message.reply(f"Error stopping the stream: {str(e)}")
+
+
+@app.on_message(filters.command("status", prefixes=".") & (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def get_play_status(client, message):
+    try:
+        played_time = await call_py.played_time(message.chat.id)
+        await client.send_message(message.chat.id, f'Current seconds: {played_time}')
+    except Exception as e:
+        pass
+        # await message.reply(f"Error fetching the status: {str(e)}")
+
 @app.on_message(filters.command("ai", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
     text_to_generate = message.text.split(".ai", 1)[1].strip()
@@ -507,7 +585,12 @@ async def change_name():
         except Exception as e:
             await app.send_message(-1002096576575, e)
         await asyncio.sleep(60) 
-async def main():
-    async with app:
-        await change_name()
-app.run(main())
+# async def main():
+#     async with app:
+#         await change_name()
+# app.run(main())
+# call_py.start()  
+# idle()      
+app.start()          # Start the Pyrogram client manually
+call_py.start()   # Start the PyTgCalls client
+idle()

@@ -6,3 +6,4 @@ requests
 pytz
 google-generativeai
 Pillow
+py-tgcalls==2.0.4
