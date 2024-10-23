@@ -291,7 +291,7 @@ async def handle_bro(client, message):
     api_url = 'https://webacesapi.onrender.com/search?query='+q
     i=await message.reply_text("<code>Wait it takes some time for response...</code>")
     r = requests.get(api_url)
-    i.delete()
+    await i.delete()
     if r.status_code == requests.codes.ok:
         ans=r.json().get('response')
         await message.reply(ans)
@@ -427,7 +427,7 @@ async def handle_bro(client, message):
             f"<b>Usage: </b><code>.gita [prompt/reply to message]</code>"
         )
          return
-        r=requests.get('https://api.mygitagpt.com/api/v1/gpt/campaign?prompt=hi')
+        r=requests.get('https://api.mygitagpt.com/api/v1/gpt/campaign?prompt='+prompt)
         text= r.content.decode()
     
         await message.reply_text(f"{text}", parse_mode=enums.ParseMode.MARKDOWN)
@@ -447,11 +447,11 @@ async def handle_bro(client, message):
         
         "**Text-related Commands:**\n"
         "1. `.ai` - ChatGPT response.\n"
-        "2. `.gita` - Bhagavad Gita response.\n"
-        "3. `.gem` / `.gemini` - Gemini AI response.\n"
-        "4. `.web` - Web access GPT.\n"
-        "5. `.b` - Unrestricted content.\n"
-        "6. `.air` - Add reply text and given text.\n\n"
+        "2. `.gem` / `.gemini` - Gemini AI response.\n"
+        "3. `.web` - Web access GPT.\n"
+        "4. `.b` - Unrestricted content.\n"
+        "5. `.air` - Add reply text and given text.\n"
+        "6. `.gita` - Bhagavad Gita response.\n\n"
         
         "**Image-related Commands** __(Reply to an image)__:\n"
         "1. `.img` - Image generation.\n"
@@ -463,8 +463,8 @@ async def handle_bro(client, message):
         "1. `.down` / `.d` - Download any video from a given URL __(e.g., Insta, X,fb,tiktok,snap,vimeo and so on)__.\n"
         "2. `.num 9998881234` - Check phone number validation.\n"
         "3. `.tor Kalki 2898 AD` - Get Tor link for the query.\n"
-        "4. `.quote` - Get a random quote.\n"
-        "5. `.fact` - Get a random fact.\n"
+        "4. `.fact` - fact checker.\n"
+        "5. `.quote` - Get a random quote.\n"
         '6 `.al` - Check if the bot is alive.\n'
         "7. `.h`, `.help`, `.cmds` - Show this help message."
     )
