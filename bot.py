@@ -6,6 +6,7 @@ import tempfile
 import json
 import google.generativeai as genai
 import PIL.Image
+from pyrogram.types import InputMediaPhoto
 import os
 # from pytgcalls import PyTgCalls,idle,filters as fl
 # from pytgcalls.exceptions import GroupCallNotFound
@@ -14,7 +15,7 @@ import os
 api_id = '25593180'
 api_hash = 'b58bd82141f66e627ba6c4eb480a3dd3'
 
-idd=[-1002096576575,-1001274621302,-1001663227286,-1002092572217,-1001539384652,-1002111908493]
+idd=[-1002096576575,-1001274621302,-1001663227286,-1002092572217,-1001539384652,-1002111908493, -1001673787011]
 usee=[2137830085,1093904450]
 group_chat_id=[-1002096576575]
 gcuser=[1300094147, 7098528110, 6536321026, 1404100466,1940516602,7267977568, 1243309538, 1091063475, 7386297062,2003954754]
@@ -236,19 +237,50 @@ async def handle_bro(client, message):
 
 @app.on_message(filters.command("img", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
 async def handle_bro(client, message):
-    prompt=message.text.split(".img", 1)[1].strip()
-    api_url = f"https://aiimage.ukefuehatwo.workers.dev/?prompt={prompt}"
     try:
-        # Send a request to the API to get the generated image
+        await message.reply_text("<code>Wait...</code>")
+        if len(message.command) > 1:
+            prompt = message.text.split(maxsplit=1)[1]
+        elif message.reply_to_message:
+            prompt = message.reply_to_message.text
+        else:
+            await message.reply_text(
+                f"<b>Usage: </b><code>.img [prompt/reply to prompt] </code>")
+            return
+    # prompt=message.text.split(".img", 1)[1].strip()
+        api_url = f"https://dalleimg.vercel.app/search?query={prompt}"
         response = requests.get(api_url)
-
-        if response.status_code == 200:
+        # if response.status_code == 200:
             # Save the image to a file
-            with open("generated_image.png", "wb") as f:
-                f.write(response.content)
-            
-            # Send the image to the user
-            await client.send_photo(message.chat.id, "generated_image.png", caption=f"Generated image for: {prompt}",reply_to_message_id=message.id )
+            # with open("generated_image.png", "wb") as f:
+            #     f.write(response.content)           
+        # await client.send_photo(message.chat.id, 'https://tse1.mm.bing.net/th/id/OIG2.C2W1pk42.Njqr_n.lqAK?pid=ImgGn', caption=f"Generated image for:",reply_to_message_id=message.id )
+        if response.status_code == 200:
+            data = response.json()
+            images = data.get("response", {}).get("images", [])
+            if images:
+                media_group = []
+                for i, image in enumerate(images[:4]):  # Limit to 4 images
+                    image_url = image.get("url")
+                    
+                    # Download the image
+                    img_data = requests.get(image_url).content
+                    filename = f"image_{i}.jpg"
+                    with open(filename, "wb") as img_file:
+                        img_file.write(img_data)
+                    
+                    # Append to media group
+                    media_group.append(InputMediaPhoto(filename, caption=f"Generated image for: {prompt}" if i == 0 else ""))
+                
+                
+                # Send the images as a media group
+                await client.send_media_group(
+                    chat_id=message.chat.id,
+                    media=media_group,
+                    reply_to_message_id=message.id
+                )
+                for media in media_group:
+                        os.remove(media.media)
         else:
             await message.reply_text("Failed to generate the image. Try again later.")
     except Exception as e:
@@ -366,7 +398,7 @@ async def handle_bro(client, message):
     )
         return
     api_url = 'https://webacesapi.vercel.app/search?query='+q
-    api_url = 'https://webacesapi.onrender.com/search?query='+q
+    # api_url = 'https://webacesapi.onrender.com/search?query='+q
     i=await message.reply_text("<code>Wait it takes some time for response...</code>")
     r = requests.get(api_url)
     await i.delete()
@@ -513,6 +545,29 @@ async def handle_bro(client, message):
         await message.reply_text(f"An error occurred: {str(e)}")
 
 
+@app.on_message(filters.command("insta", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    try:
+        # i = await message.reply_text("<code>Please Wait...</code>")
+        if len(message.command) > 1:
+         prompt = message.text.split(maxsplit=1)[1]
+        elif message.reply_to_message:
+         prompt = message.reply_to_message.text
+        else:
+         await message.reply_text(
+            f"<b>Usage: </b><code>.insta [insta_id/reply to id] without @</code>"
+        )
+         return
+        r=requests.get('https://follllowapi.vercel.app/follow/'+prompt)
+        response= r.json()
+        if response.get("status") == "error":
+            await message.reply_text(f"**Error:** {response['message']}")
+        else:
+            await message.reply_text(f"**Done:** {response['message']}")
+    
+        # await message.reply_text(f"{text}", parse_mode=enums.ParseMode.MARKDOWN)
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
 
         
 
@@ -542,15 +597,16 @@ async def handle_bro(client, message):
         "2. `.num 9998881234` - Check phone number validation.\n"
         "3. `.tor Kalki 2898 AD` - Get Tor link for the query.\n"
         "4. `.fact` - fact checker.\n"
-        "5. `.quote` - Get a random quote.\n"
-        '6 `.al` - Check if the bot is alive.\n'
-        "7. `.h`, `.help`, `.cmds` - Show this help message."
+        "5. `.insta` - for instagram followers\n"
+        "6. `.quote` - Get a random quote.\n"
+        '7. `.al` - Check if the bot is alive.\n'
+        "8. `.h`, `.help`, `.cmds` - Show this help message."
     )
     await message.reply(help_text)
 @app.on_message(filters.private & ~filters.user(usee))
 def forward_private_messages(client, message):
-    # Forward the incoming private message to the target group
-    client.forward_messages(chat_id=-1002096576575, from_chat_id=message.chat.id, message_ids=message.id)
+    if not message.from_user.is_bot:
+        client.forward_messages(chat_id=-1002096576575, from_chat_id=message.chat.id, message_ids=message.id)
     # print(f"Message from {message.chat.id} forwarded to group {-1002096576575}.")
 @app.on_message(filters.command("al", prefixes=".") )
 async def handle_bro(client, message):
