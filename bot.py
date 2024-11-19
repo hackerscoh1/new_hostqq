@@ -10,6 +10,9 @@ import io
 from PIL import Image
 from pyrogram.types import InputMediaPhoto
 import os
+import base64
+# https://github.com/SreejanPersonal/Free-Unoffical-OpenAI-API
+# from pyrogram.types import InputFile
 # from pytgcalls import PyTgCalls,idle,filters as fl
 # from pytgcalls.exceptions import GroupCallNotFound
 # from pytgcalls.types import MediaStream,ChatUpdate,Update
@@ -103,6 +106,75 @@ def user_info_command(bot, update):
             update.reply_text("Please reply to a message to get the user ID, chat ID")
     except IndexError:
         update.reply_text("Please provide a user ID.")
+def get_audio_text_completion(prompt: str):
+    url = "https://devsdocode-openai.hf.space/chat/completions"
+    payload = {
+        "messages": [{"role": "user", "content": prompt}],
+        "model": "gpt-4o-audio-preview-2024-10-01",
+        "modalities": ["text", "audio"],
+        "audio": {"voice": "nova", "format": "wav"},
+        "temperature": 0.9,
+        "presence_penalty": 0,
+        "frequency_penalty": 0,
+        "top_p": 1
+    }
+
+    response = requests.post(url, json=payload)
+    if response.ok:
+        data = response.json()
+        try:
+            if "choices" in data and data["choices"]:
+                message = data["choices"][0].get("message", {})
+                audio_data = None
+                if "audio" in message and "data" in message["audio"]:
+                    audio_data = base64.b64decode(message["audio"]["data"])
+                    return audio_data, message.get("audio", {}).get("transcript", "")
+                else:
+                    return None, "No audio data found."
+        except Exception as e:
+            print(f"Error: {e}")
+            return None, "An error occurred while processing the request."
+    else:
+        print("Request failed with status code:", response.status_code)
+        return None, "Failed to get response from the service."
+
+
+@app.on_message(filters.command("talk", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+async def handle_bro(client, message):
+    try:
+        i=await message.reply_text("<code>Wait...</code>")
+        if len(message.command) > 1:
+            prompt = message.text.split(maxsplit=1)[1]
+        elif message.reply_to_message:
+            prompt = message.reply_to_message.text
+        else:
+            await message.reply_text(
+                f"<b>Usage: </b><code>.talk [prompt/reply to prompt] </code>")
+            return
+        audio_bytes, transcript = get_audio_text_completion(prompt)
+    
+        if audio_bytes:
+            # Save the audio file
+            file_name = "AI_response.wav"
+            with open(file_name, "wb") as audio_file:
+                audio_file.write(audio_bytes)
+
+            # Send the audio file to the user
+            with open(file_name, "rb") as audio_file:
+                await message.reply_audio(audio=audio_file, caption=f"Transcript: {transcript}")
+            await i.delete()
+
+
+            # Delete the file after sending
+            os.remove(file_name)
+        else:
+            await message.reply_text(f"Error: {transcript}")
+
+
+
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
+
 
 @app.on_message(filters.command("num", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
@@ -689,16 +761,19 @@ async def handle_bro(client, message):
         "3. `.web` - Web access GPT.\n"
         "4. `.b` - Unrestricted content.\n"
         "5. `.air` - Add reply text and given text.\n"
-        "6. `.gita` - Bhagavad Gita response.\n\n"
-        "7. `.gpt` - GPT response.\n\n"
+        "6. `.gita` - Bhagavad Gita response.\n"
+        "7. `.gpt` - GPT response.\n"
+        "8. `.text` - Audio to text(reply to audio file).\n"
+        "9. `.talk` - AI response in audio format.\n\n"
+
         
-        "**Image-related Commands** __(Reply to an image)__:\n"
+        "**Image-related Commands** :\n"
         "1. `.img1` -for flux Image generation.\n"
         "2. `.img2` -for stable diffusion Image generation.\n"
         "3. `.img3` -for dalle Image generation.\n"
-        "4. `.text` - Extract text from image.\n"
-        "5. `.get` / `.info` - Get information about image.\n"
-        "6. `.cook` - Get recipe for item in image.\n\n"
+        "4. `.t` - Extract text from image.__(Reply to an image)__\n"
+        "5. `.get` / `.info` - Get information about image.__(Reply to an image)__\n"
+        "6. `.cook` - Get recipe for item in image.__(Reply to an image)__\n\n"
         
         "**Other Commands:**\n"
         "1. `.down` / `.d` - Download any video from a given URL __(e.g., Insta, X,fb,tiktok,snap,vimeo and so on)__.\n"
@@ -728,7 +803,7 @@ async def query(filename):
         # Return the error message if the API request fails
         return {"error": f"Error: {str(e)}"}
 
-@app.on_message(filters.command("lq", prefixes=".")  & filters.reply)
+@app.on_message(filters.command("text", prefixes=".")  & filters.reply &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def listen(client, message):
     try:
         if message.reply_to_message and (message.reply_to_message.audio or message.reply_to_message.voice):
@@ -776,15 +851,15 @@ async def listen(client, message):
 @app.on_message(filters.command("al", prefixes=".") )
 async def handle_bro(client, message):
     await message.reply('Im alive')
-@app.on_message(filters.command("text", prefixes=".") & (filters.photo & filters.caption) | (filters.reply & filters.text)   &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+@app.on_message(filters.command("t", prefixes=".") & (filters.photo & filters.caption) | (filters.reply & filters.text)   &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_text_extraction(client, message):
-    if message.caption == ".text" or message.text == ".text":
+    if message.caption == ".t" or message.text == ".t":
         if message.photo:
             photo = message.photo
         elif message.reply_to_message and message.reply_to_message.photo:
             photo = message.reply_to_message.photo
         else:
-            await message.reply("Please send a valid image with the `.text` command.")
+            await message.reply("Please send a valid image with the `.t` command.")
             return
         extracted_text = await extract_text_from_image(client, photo.file_id)
         if extracted_text:
