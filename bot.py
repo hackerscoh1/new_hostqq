@@ -6,6 +6,8 @@ import tempfile
 import json
 import google.generativeai as genai
 import PIL.Image
+import io
+from PIL import Image
 from pyrogram.types import InputMediaPhoto
 import os
 # from pytgcalls import PyTgCalls,idle,filters as fl
@@ -35,7 +37,7 @@ generation_config_cook = {
   "top_k": 40,
   "max_output_tokens": 1024,
     }
-model_cook = genai.GenerativeModel(model_name="gemini-1.5-flash",
+model_cook = genai.GenerativeModel(model_name="gemini-1.5-flash-001",
                               generation_config=generation_config_cook)
 
 def validate_num(num, country):
@@ -54,6 +56,17 @@ def validate_num(num, country):
         return {"error": str(e)}
 
 def generate_ask(question):
+    try:
+        api_url = "https://chat-api-tau.vercel.app/ask?q=hi"
+        full_url = api_url + question
+        response = requests.get(full_url)
+        if response.status_code == 200:
+            return response.json().get('response') 
+        else:
+            return 'Failed to generate text'
+    except Exception as e:
+        return 'Failed to generate text. Please try again later.'
+def generate_gpt(question):
     try:
         api_url = "https://chat-api-tau.vercel.app/api?chat="
         full_url = api_url + question
@@ -194,6 +207,22 @@ async def handle_bro(client, message):
     if text_to_generate:
         generated_text = generate_ask(text_to_generate)
         await message.reply(generated_text)
+@app.on_message(filters.command("gpt", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+async def handle_bro(client, message):
+    if len(message.command) > 1:
+        q = message.text.split(maxsplit=1)[1]
+    elif message.reply_to_message:
+        q = message.reply_to_message.text
+    else:
+        await message.reply_text(
+        f"<b>Usage: </b><code>.code [prompt/reply to message]</code>"
+    )
+        return
+    i=await message.reply_text("<code>Wait...</code>")
+    if q:
+        generated_text = generate_gpt(q)
+        await i.delete()
+        await message.reply(generated_text)
 @app.on_message(filters.command("b", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
     text_to_generate = message.text.split(".b", 1)[1].strip()
@@ -235,17 +264,17 @@ async def handle_bro(client, message):
     else:
         await message.reply_text("reply")
 
-@app.on_message(filters.command("img", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+@app.on_message(filters.command(["img3",'image3'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
 async def handle_bro(client, message):
     try:
-        await message.reply_text("<code>Wait...</code>")
+        i=await message.reply_text("<code>Wait...</code>")
         if len(message.command) > 1:
             prompt = message.text.split(maxsplit=1)[1]
         elif message.reply_to_message:
             prompt = message.reply_to_message.text
         else:
             await message.reply_text(
-                f"<b>Usage: </b><code>.img [prompt/reply to prompt] </code>")
+                f"<b>Usage: </b><code>.img3 [prompt/reply to prompt] </code>")
             return
     # prompt=message.text.split(".img", 1)[1].strip()
         api_url = f"https://dalleimg.vercel.app/search?query={prompt}"
@@ -259,6 +288,7 @@ async def handle_bro(client, message):
             data = response.json()
             images = data.get("response", {}).get("images", [])
             if images:
+                await i.delete()
                 media_group = []
                 for i, image in enumerate(images[:4]):  # Limit to 4 images
                     image_url = image.get("url")
@@ -274,6 +304,7 @@ async def handle_bro(client, message):
                 
                 
                 # Send the images as a media group
+                
                 await client.send_media_group(
                     chat_id=message.chat.id,
                     media=media_group,
@@ -287,6 +318,80 @@ async def handle_bro(client, message):
         await message.reply_text(f"An error occurred: {str(e)}")
 
 
+
+
+@app.on_message(filters.command(["img1",'img','image','image1'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+async def handle_bro(client, message):
+    try:
+        i=await message.reply_text("<code>Wait...</code>")
+
+        prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (message.reply_to_message.text if message.reply_to_message else None)
+        
+        if not prompt:
+            return await message.reply_text("<b>Usage: </b><code>.img1 [prompt/reply to prompt]</code>")
+
+        API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev"
+        headers = {"Authorization": "Bearer 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"}
+
+        response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+        
+        if response.status_code == 200:
+            image = Image.open(io.BytesIO(response.content))
+        else:
+            return await message.reply("Failed to generate the image. Please try again later.")
+        temp_file_path = "generated_image.png"
+        image.save(temp_file_path)
+        with open(temp_file_path, "rb") as image_file:
+            original_message_id = message.message_id if hasattr(message, 'message_id') else None
+            await i.delete()
+            await message.reply_photo(photo=image_file, reply_to_message_id=original_message_id, caption=f"Flux model-: {prompt}")
+        os.remove(temp_file_path)
+
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
+async def extract_text_from_image(client, file_id):
+    with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
+        await client.download_media(file_id, file_name=temp_file.name)
+        with open(temp_file.name, 'rb') as image_file_descriptor:
+            files = {'image': image_file_descriptor}
+            api_urll = 'https://api.api-ninjas.com/v1/imagetotext'
+            r = requests.post(api_urll, files=files)
+        if r.status_code == 200:
+            data = r.json()
+            all_text = " ".join([item['text'] for item in data])
+            return all_text if all_text.strip() else "No text found in the image."
+        else:
+            return "Failed to process the image. Please try again."
+
+@app.on_message(filters.command(["img2",'image2'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+async def handle_bro(client, message):
+    try:
+        i=await message.reply_text("<code>Wait...</code>")
+
+        prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (message.reply_to_message.text if message.reply_to_message else None)
+        
+        if not prompt:
+            return await message.reply_text("<b>Usage: </b><code>.img2 [prompt/reply to prompt]</code>")
+
+        API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3.5-large"
+        headers = {"Authorization": "Bearer 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"}
+
+        response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+        
+        if response.status_code == 200:
+            image = Image.open(io.BytesIO(response.content))
+        else:
+            return await message.reply("Failed to generate the image. Please try again later.")
+        temp_file_path = "generated_image.png"
+        image.save(temp_file_path)
+        with open(temp_file_path, "rb") as image_file:
+            original_message_id = message.message_id if hasattr(message, 'message_id') else None
+            await i.delete()
+            await message.reply_photo(photo=image_file, reply_to_message_id=original_message_id, caption=f"stable diffusion model- {prompt}" )
+        os.remove(temp_file_path)
+
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
 async def extract_text_from_image(client, file_id):
     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
         await client.download_media(file_id, file_name=temp_file.name)
@@ -399,7 +504,7 @@ async def handle_bro(client, message):
         return
     api_url = 'https://webacesapi.vercel.app/search?query='+q
     # api_url = 'https://webacesapi.onrender.com/search?query='+q
-    i=await message.reply_text("<code>Wait it takes some time for response...</code>")
+    i=await message.reply_text("<code>Wait...</code>")
     r = requests.get(api_url)
     await i.delete()
     if r.status_code == requests.codes.ok:
@@ -411,7 +516,7 @@ async def handle_bro(client, message):
 # -------------------------------------------------
 genai.configure(api_key=API_KEY)
 
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-1.5-flash-001")
 @app.on_message(filters.command(["gem",'gemini'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
     # q=message.text.split(".gem", 1)[1].strip()
@@ -585,12 +690,15 @@ async def handle_bro(client, message):
         "4. `.b` - Unrestricted content.\n"
         "5. `.air` - Add reply text and given text.\n"
         "6. `.gita` - Bhagavad Gita response.\n\n"
+        "7. `.gpt` - GPT response.\n\n"
         
         "**Image-related Commands** __(Reply to an image)__:\n"
-        "1. `.img` - Image generation.\n"
-        "2. `.text` - Extract text from image.\n"
-        "3. `.get` / `.info` - Get information about image.\n"
-        "4. `.cook` - Get recipe for item in image.\n\n"
+        "1. `.img1` -for flux Image generation.\n"
+        "2. `.img2` -for stable diffusion Image generation.\n"
+        "3. `.img3` -for dalle Image generation.\n"
+        "4. `.text` - Extract text from image.\n"
+        "5. `.get` / `.info` - Get information about image.\n"
+        "6. `.cook` - Get recipe for item in image.\n\n"
         
         "**Other Commands:**\n"
         "1. `.down` / `.d` - Download any video from a given URL __(e.g., Insta, X,fb,tiktok,snap,vimeo and so on)__.\n"
@@ -603,11 +711,68 @@ async def handle_bro(client, message):
         "8. `.h`, `.help`, `.cmds` - Show this help message."
     )
     await message.reply(help_text)
-@app.on_message(filters.private & ~filters.user(usee))
-def forward_private_messages(client, message):
-    if not message.from_user.is_bot:
-        client.forward_messages(chat_id=-1002096576575, from_chat_id=message.chat.id, message_ids=message.id)
+# @app.on_message(filters.private & ~filters.user(usee))
+# def forward_private_messages(client, message):
+#     if not message.from_user.is_bot:
+#         client.forward_messages(chat_id=-1002096576575, from_chat_id=message.chat.id, message_ids=message.id)
     # print(f"Message from {message.chat.id} forwarded to group {-1002096576575}.")
+async def query(filename):
+    try:
+        with open(filename, "rb") as f:
+            data = f.read()
+        API_URL = "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo"
+        headers = {"Authorization": "Bearer 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"}
+        response = requests.post(API_URL, headers=headers, data=data)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        # Return the error message if the API request fails
+        return {"error": f"Error: {str(e)}"}
+
+@app.on_message(filters.command("lq", prefixes=".")  & filters.reply)
+async def listen(client, message):
+    try:
+        if message.reply_to_message and (message.reply_to_message.audio or message.reply_to_message.voice):
+                # Check if the message contains an audio file or voice message
+            if message.reply_to_message.audio:
+                audio_file = message.reply_to_message.audio
+                file_id = audio_file.file_id
+                file_name = f"{file_id}.flac"
+            elif message.reply_to_message.voice:
+                # Voice messages are sent as voice, not audio
+                audio_file = message.reply_to_message.voice
+                file_id = audio_file.file_id
+                file_name = f"{file_id}.ogg"  # Voice messages are usually .ogg
+
+            # Download the audio file (either from .audio or .voice)
+            downloaded_file = await message.reply_to_message.download(file_name)
+            # Send the file to Hugging Face API for transcription
+            result = await query(downloaded_file)
+            if "error" in result:
+                raise Exception(result["error"])
+            for i in result:
+                r=result
+            transcribed_text=r.get('text')
+            MAX_MESSAGE_LENGTH=3500
+            if len(transcribed_text) > MAX_MESSAGE_LENGTH:
+                transcribed_text = transcribed_text[:MAX_MESSAGE_LENGTH]  # Truncate to the first part
+                transcribed_text += "\n... [Message Truncated]"  # Add a note that the message was truncated
+            await message.reply(f"**transcribed text** \n\n {transcribed_text}")
+            os.remove(downloaded_file)    
+    except Exception as e:
+        error_message = f"An error occurred: {str(e)}\n\n"
+        await message.reply(error_message)
+        os.remove(downloaded_file)
+
+
+
+    # Send the file to Hugging Face API for transcription
+    # result = query(downloaded_file)
+
+    # Extract the transcription text
+    # transcribed_text = result.get("text", "Sorry, I couldn't transcribe the audio.")
+
+    # Send the transcribed text back to the user
+
 @app.on_message(filters.command("al", prefixes=".") )
 async def handle_bro(client, message):
     await message.reply('Im alive')
