@@ -887,22 +887,23 @@ async def handle_text_extraction(client, message):
         else:
             await message.reply("No text was extracted from the image.")
 
-async def change_name():
-    while True:
-        try:
-            # current_time = time.strftime("%H:%M:%S")
-            # utc_time = datetime.utcnow()
-            # ist = pytz.timezone('Asia/Kolkata')
-            # ti=(utc_time.astimezone(ist)+ timedelta(minutes=1)).strftime("%I:%M %p")
-            # await app.update_profile(last_name=ti)
-            pass
-        except Exception as e:
-            await app.send_message(-1002096576575, e)
-        await asyncio.sleep(60) 
-async def main():
-    async with app:
-        await change_name()
-app.run(main())
+# async def change_name():
+#     while True:
+#         try:
+#             # current_time = time.strftime("%H:%M:%S")
+#             # utc_time = datetime.utcnow()
+#             # ist = pytz.timezone('Asia/Kolkata')
+#             # ti=(utc_time.astimezone(ist)+ timedelta(minutes=1)).strftime("%I:%M %p")
+#             # await app.update_profile(last_name=ti)
+#             pass
+#         except Exception as e:
+#             await app.send_message(-1002096576575, e)
+#         await asyncio.sleep(60) 
+# async def main():
+#     async with app:
+#         await change_name()
+# app.run(main())
+app.run()
 # call_py.start()  
 # idle()      
 # app.start()          # Start the Pyrogram client manually
