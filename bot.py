@@ -7,6 +7,7 @@ import json
 import google.generativeai as genai
 import PIL.Image
 import io
+from io import BytesIO
 from PIL import Image
 from pyrogram.types import InputMediaPhoto
 import os
@@ -60,7 +61,7 @@ def validate_num(num, country):
 
 def generate_ask(question):
     try:
-        api_url = "https://chat-api-tau.vercel.app/ask?q=hi"
+        api_url = "https://chat-api-tau.vercel.app/ask?q="
         full_url = api_url + question
         response = requests.get(full_url)
         if response.status_code == 200:
@@ -400,24 +401,28 @@ async def handle_bro(client, message):
         prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (message.reply_to_message.text if message.reply_to_message else None)
         
         if not prompt:
+            await i.delete()
             return await message.reply_text("<b>Usage: </b><code>.img1 [prompt/reply to prompt]</code>")
 
         API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev"
         headers = {"Authorization": "Bearer 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"}
-
         response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
-        
-        if response.status_code == 200:
-            image = Image.open(io.BytesIO(response.content))
-        else:
-            return await message.reply("Failed to generate the image. Please try again later.")
-        temp_file_path = "generated_image.png"
-        image.save(temp_file_path)
-        with open(temp_file_path, "rb") as image_file:
-            original_message_id = message.message_id if hasattr(message, 'message_id') else None
-            await i.delete()
-            await message.reply_photo(photo=image_file, reply_to_message_id=original_message_id, caption=f"Flux model-: {prompt}")
-        os.remove(temp_file_path)
+
+        if response.status_code != 200:
+            return await message.reply("Failed to generate the image")
+
+        # Open image directly from the response content
+        image = Image.open(BytesIO(response.content))
+
+        # Use BytesIO for in-memory file handling
+        temp_file = BytesIO()
+        image.save(temp_file, format="PNG")
+        temp_file.seek(0)
+
+        # Send the image back
+        await message.reply_photo(photo=temp_file, reply_to_message_id=message.id, caption=f"Flux model: {prompt}")
+
+        await i.delete()
 
     except Exception as e:
         await message.reply_text(f"An error occurred: {str(e)}")
@@ -438,32 +443,45 @@ async def extract_text_from_image(client, file_id):
 @app.on_message(filters.command(["img2",'image2'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
 async def handle_bro(client, message):
     try:
-        i=await message.reply_text("<code>Wait...</code>")
+        # Send initial response
+        i = await message.reply_text("<code>Wait...</code>")
 
-        prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (message.reply_to_message.text if message.reply_to_message else None)
-        
+        # Extract the prompt
+        prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (
+            message.reply_to_message.text if message.reply_to_message else None)
+
         if not prompt:
+            await i.delete()
             return await message.reply_text("<b>Usage: </b><code>.img2 [prompt/reply to prompt]</code>")
 
+        # Hugging Face API details
         API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3.5-large"
         headers = {"Authorization": "Bearer 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"}
 
+        # Make API request
         response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
-        
-        if response.status_code == 200:
-            image = Image.open(io.BytesIO(response.content))
-        else:
-            return await message.reply("Failed to generate the image. Please try again later.")
-        temp_file_path = "generated_image.png"
-        image.save(temp_file_path)
-        with open(temp_file_path, "rb") as image_file:
-            original_message_id = message.message_id if hasattr(message, 'message_id') else None
+
+        if response.status_code != 200:
             await i.delete()
-            await message.reply_photo(photo=image_file, reply_to_message_id=original_message_id, caption=f"stable diffusion model- {prompt}" )
-        os.remove(temp_file_path)
+            return await message.reply("Failed to generate the image.")
+
+        # Process image directly from response content
+        image = Image.open(BytesIO(response.content))
+
+        # Use BytesIO to avoid disk I/O
+        temp_file = BytesIO()
+        image.save(temp_file, format="PNG")
+        temp_file.seek(0)
+
+        # Reply with the generated image
+        await message.reply_photo(photo=temp_file, reply_to_message_id=message.id, caption=f"Stable Diffusion Model: {prompt}")
+
+        # Cleanup
+        await i.delete()
 
     except Exception as e:
         await message.reply_text(f"An error occurred: {str(e)}")
+
 async def extract_text_from_image(client, file_id):
     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
         await client.download_media(file_id, file_name=temp_file.name)
