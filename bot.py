@@ -337,7 +337,7 @@ async def handle_bro(client, message):
     else:
         await message.reply_text("reply")
 
-@app.on_message(filters.command(["img3",'image3'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+@app.on_message(filters.command(['img',"img3",'image3'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
 async def handle_bro(client, message):
     try:
         i=await message.reply_text("<code>Wait...</code>")
@@ -393,7 +393,7 @@ async def handle_bro(client, message):
 
 
 
-@app.on_message(filters.command(["img1",'img','image','image1'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+@app.on_message(filters.command(["img1",'image','image1'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
 async def handle_bro(client, message):
     try:
         i=await message.reply_text("<code>Wait...</code>")
