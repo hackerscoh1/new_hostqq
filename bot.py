@@ -176,6 +176,45 @@ async def handle_bro(client, message):
     except Exception as e:
         await message.reply_text(f"An error occurred: {str(e)}")
 
+@app.on_message(filters.command("audio", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+async def handle_bro(client, message):
+    try:
+        i=await message.reply_text("<code>Wait...</code>")
+        if len(message.command) > 1:
+            prompt = message.text.split(maxsplit=1)[1]
+        elif message.reply_to_message:
+            prompt = message.reply_to_message.text
+        else:
+            await message.reply_text(
+                f"<b>Usage: </b><code>.talk [prompt/reply to prompt] </code>")
+            return
+        full_url=f'https://voiceap.vercel.app/voice?text={prompt}'
+        response = requests.get(full_url).json()
+
+        audio_url = response["OutputUri"]
+
+    # Download the audio file
+        audio_data = requests.get(audio_url)
+        if audio_data.status_code == 200:
+            # Save the file locally
+            with open("output.mp3", "wb") as file:
+                file.write(audio_data.content)
+
+            # Send the audio file in response
+            await i.delete()
+            await message.reply_audio(
+                audio="output.mp3",  # Path to the downloaded file
+                caption='🤖'
+                
+            )
+        else:
+            await i.delete()
+            await message.reply("Failed to download the audio file.")
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
+
+        
+
 
 @app.on_message(filters.command("num", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
@@ -780,9 +819,8 @@ async def handle_bro(client, message):
         "4. `.b` - Unrestricted content.\n"
         "5. `.air` - Add reply text and given text.\n"
         "6. `.gita` - Bhagavad Gita response.\n"
-        "7. `.gpt` - GPT response.\n"
-        "8. `.text` - Audio to text(reply to audio file).\n"
-        "9. `.talk` - AI response in audio format.\n\n"
+        "7. `.text` - Audio to text(reply to audio file).\n"
+        "8. `.talk` - AI response in audio format.\n\n"
 
         
         "**Image-related Commands** :\n"
@@ -798,7 +836,7 @@ async def handle_bro(client, message):
         "2. `.num 9998881234` - Check phone number validation.\n"
         "3. `.tor Kalki 2898 AD` - Get Tor link for the query.\n"
         "4. `.fact` - fact checker.\n"
-        "5. `.insta` - for instagram followers\n"
+        "5. `.insta` - for instagram followers\n(not working)"
         "6. `.quote` - Get a random quote.\n"
         '7. `.al` - Check if the bot is alive.\n'
         "8. `.h`, `.help`, `.cmds` - Show this help message."
