@@ -41,8 +41,8 @@ generation_config_cook = {
   "top_k": 40,
   "max_output_tokens": 1024,
     }
-model_cook = genai.GenerativeModel(model_name="gemini-1.5-flash-001",
-                              generation_config=generation_config_cook)
+# model_cook = genai.GenerativeModel(model_name="gemini-1.5-flash-001",
+#                               generation_config=generation_config_cook)
 
 def validate_num(num, country):
     try:
@@ -70,28 +70,28 @@ def generate_ask(question):
             return 'Failed to generate text'
     except Exception as e:
         return 'Failed to generate text. Please try again later.'
-def generate_gpt(question):
-    try:
-        api_url = "https://chat-api-tau.vercel.app/api?chat="
-        full_url = api_url + question
-        response = requests.get(full_url)
-        if response.status_code == 200:
-            return response.json().get('response') 
-        else:
-            return 'Failed to generate text'
-    except Exception as e:
-        return 'Failed to generate text. Please try again later.'
-def generate_black(question):
-    try:
-        api_url = "https://shadow-aischat.vercel.app/api?chat="
-        full_url = api_url + question
-        response = requests.get(full_url)
-        if response.status_code == 200:
-            return response.json().get('response') 
-        else:
-            return 'Failed to generate text'
-    except Exception as e:
-        return 'Failed to generate text. Please try again later.'
+# def generate_gpt(question):
+#     try:
+#         api_url = "https://chat-api-tau.vercel.app/api?chat="
+#         full_url = api_url + question
+#         response = requests.get(full_url)
+#         if response.status_code == 200:
+#             return response.json().get('response') 
+#         else:
+#             return 'Failed to generate text'
+#     except Exception as e:
+#         return 'Failed to generate text. Please try again later.'
+# def generate_black(question):
+#     try:
+#         api_url = "https://shadow-aischat.vercel.app/api?chat="
+#         full_url = api_url + question
+#         response = requests.get(full_url)
+#         if response.status_code == 200:
+#             return response.json().get('response') 
+#         else:
+#             return 'Failed to generate text'
+#     except Exception as e:
+#         return 'Failed to generate text. Please try again later.'
 
 @app.on_message(filters.command("id", prefixes=".") & filters.user(usee) )
 def user_info_command(bot, update):
@@ -107,74 +107,74 @@ def user_info_command(bot, update):
             update.reply_text("Please reply to a message to get the user ID, chat ID")
     except IndexError:
         update.reply_text("Please provide a user ID.")
-def get_audio_text_completion(prompt: str):
-    url = "https://devsdocode-openai.hf.space/chat/completions"
-    payload = {
-        "messages": [{"role": "user", "content": prompt}],
-        "model": "gpt-4o-audio-preview-2024-10-01",
-        "modalities": ["text", "audio"],
-        "audio": {"voice": "nova", "format": "wav"},
-        "temperature": 0.9,
-        "presence_penalty": 0,
-        "frequency_penalty": 0,
-        "top_p": 1
-    }
+# def get_audio_text_completion(prompt: str):
+#     url = "https://devsdocode-openai.hf.space/chat/completions"
+#     payload = {
+#         "messages": [{"role": "user", "content": prompt}],
+#         "model": "gpt-4o-audio-preview-2024-10-01",
+#         "modalities": ["text", "audio"],
+#         "audio": {"voice": "nova", "format": "wav"},
+#         "temperature": 0.9,
+#         "presence_penalty": 0,
+#         "frequency_penalty": 0,
+#         "top_p": 1
+#     }
 
-    response = requests.post(url, json=payload)
-    if response.ok:
-        data = response.json()
-        try:
-            if "choices" in data and data["choices"]:
-                message = data["choices"][0].get("message", {})
-                audio_data = None
-                if "audio" in message and "data" in message["audio"]:
-                    audio_data = base64.b64decode(message["audio"]["data"])
-                    return audio_data, message.get("audio", {}).get("transcript", "")
-                else:
-                    return None, "No audio data found."
-        except Exception as e:
-            print(f"Error: {e}")
-            return None, "An error occurred while processing the request."
-    else:
-        print("Request failed with status code:", response.status_code)
-        return None, "Failed to get response from the service."
+#     response = requests.post(url, json=payload)
+#     if response.ok:
+#         data = response.json()
+#         try:
+#             if "choices" in data and data["choices"]:
+#                 message = data["choices"][0].get("message", {})
+#                 audio_data = None
+#                 if "audio" in message and "data" in message["audio"]:
+#                     audio_data = base64.b64decode(message["audio"]["data"])
+#                     return audio_data, message.get("audio", {}).get("transcript", "")
+#                 else:
+#                     return None, "No audio data found."
+#         except Exception as e:
+#             print(f"Error: {e}")
+#             return None, "An error occurred while processing the request."
+#     else:
+#         print("Request failed with status code:", response.status_code)
+#         return None, "Failed to get response from the service."
 
 
-@app.on_message(filters.command("talk", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
-async def handle_bro(client, message):
-    try:
-        i=await message.reply_text("<code>Wait...</code>")
-        if len(message.command) > 1:
-            prompt = message.text.split(maxsplit=1)[1]
-        elif message.reply_to_message:
-            prompt = message.reply_to_message.text
-        else:
-            await message.reply_text(
-                f"<b>Usage: </b><code>.talk [prompt/reply to prompt] </code>")
-            return
-        audio_bytes, transcript = get_audio_text_completion(prompt)
+# @app.on_message(filters.command("talk", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+# async def handle_bro(client, message):
+#     try:
+#         i=await message.reply_text("<code>Wait...</code>")
+#         if len(message.command) > 1:
+#             prompt = message.text.split(maxsplit=1)[1]
+#         elif message.reply_to_message:
+#             prompt = message.reply_to_message.text
+#         else:
+#             await message.reply_text(
+#                 f"<b>Usage: </b><code>.talk [prompt/reply to prompt] </code>")
+#             return
+#         audio_bytes, transcript = get_audio_text_completion(prompt)
     
-        if audio_bytes:
-            # Save the audio file
-            file_name = "AI_response.wav"
-            with open(file_name, "wb") as audio_file:
-                audio_file.write(audio_bytes)
+#         if audio_bytes:
+#             # Save the audio file
+#             file_name = "AI_response.wav"
+#             with open(file_name, "wb") as audio_file:
+#                 audio_file.write(audio_bytes)
 
-            # Send the audio file to the user
-            with open(file_name, "rb") as audio_file:
-                await message.reply_audio(audio=audio_file, caption=f"Transcript: {transcript}")
-            await i.delete()
-
-
-            # Delete the file after sending
-            os.remove(file_name)
-        else:
-            await message.reply_text(f"Error: {transcript}")
+#             # Send the audio file to the user
+#             with open(file_name, "rb") as audio_file:
+#                 await message.reply_audio(audio=audio_file, caption=f"Transcript: {transcript}")
+#             await i.delete()
 
 
+#             # Delete the file after sending
+#             os.remove(file_name)
+#         else:
+#             await message.reply_text(f"Error: {transcript}")
 
-    except Exception as e:
-        await message.reply_text(f"An error occurred: {str(e)}")
+
+
+#     except Exception as e:
+#         await message.reply_text(f"An error occurred: {str(e)}")
 
 @app.on_message(filters.command("audio", prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
 async def handle_bro(client, message):
@@ -186,7 +186,7 @@ async def handle_bro(client, message):
             prompt = message.reply_to_message.text
         else:
             await message.reply_text(
-                f"<b>Usage: </b><code>.talk [prompt/reply to prompt] </code>")
+                f"<b>Usage: </b><code>.audio [prompt/reply to prompt] </code>")
             return
         full_url=f'https://voiceap.vercel.app/voice?text={prompt}'
         response = requests.get(full_url).json()
@@ -335,12 +335,12 @@ async def handle_bro(client, message):
         generated_text = generate_gpt(q)
         await i.delete()
         await message.reply(generated_text)
-@app.on_message(filters.command("b", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
-async def handle_bro(client, message):
-    text_to_generate = message.text.split(".b", 1)[1].strip()
-    if text_to_generate:
-        generated_text = generate_black(text_to_generate)
-        await message.reply(generated_text)
+# @app.on_message(filters.command("b", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+# async def handle_bro(client, message):
+#     text_to_generate = message.text.split(".b", 1)[1].strip()
+#     if text_to_generate:
+#         generated_text = generate_black(text_to_generate)
+#         await message.reply(generated_text)
 @app.on_message(filters.command("air", prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
     text_to_generate = message.text.split(".air", 1)[1].strip()
@@ -376,58 +376,58 @@ async def handle_bro(client, message):
     else:
         await message.reply_text("reply")
 
-@app.on_message(filters.command(['img',"img3",'image3'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
-async def handle_bro(client, message):
-    try:
-        i=await message.reply_text("<code>Wait...</code>")
-        if len(message.command) > 1:
-            prompt = message.text.split(maxsplit=1)[1]
-        elif message.reply_to_message:
-            prompt = message.reply_to_message.text
-        else:
-            await message.reply_text(
-                f"<b>Usage: </b><code>.img3 [prompt/reply to prompt] </code>")
-            return
-    # prompt=message.text.split(".img", 1)[1].strip()
-        api_url = f"https://dalleimg.vercel.app/search?query={prompt}"
-        response = requests.get(api_url)
-        # if response.status_code == 200:
-            # Save the image to a file
-            # with open("generated_image.png", "wb") as f:
-            #     f.write(response.content)           
-        # await client.send_photo(message.chat.id, 'https://tse1.mm.bing.net/th/id/OIG2.C2W1pk42.Njqr_n.lqAK?pid=ImgGn', caption=f"Generated image for:",reply_to_message_id=message.id )
-        if response.status_code == 200:
-            data = response.json()
-            images = data.get("response", {}).get("images", [])
-            if images:
-                await i.delete()
-                media_group = []
-                for i, image in enumerate(images[:4]):  # Limit to 4 images
-                    image_url = image.get("url")
+# @app.on_message(filters.command(["img3",'image3'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+# async def handle_bro(client, message):
+#     try:
+#         i=await message.reply_text("<code>Wait...</code>")
+#         if len(message.command) > 1:
+#             prompt = message.text.split(maxsplit=1)[1]
+#         elif message.reply_to_message:
+#             prompt = message.reply_to_message.text
+#         else:
+#             await message.reply_text(
+#                 f"<b>Usage: </b><code>.img3 [prompt/reply to prompt] </code>")
+#             return
+#     # prompt=message.text.split(".img", 1)[1].strip()
+#         api_url = f"https://dalleimg.vercel.app/search?query={prompt}"
+#         response = requests.get(api_url)
+#         # if response.status_code == 200:
+#             # Save the image to a file
+#             # with open("generated_image.png", "wb") as f:
+#             #     f.write(response.content)           
+#         # await client.send_photo(message.chat.id, 'https://tse1.mm.bing.net/th/id/OIG2.C2W1pk42.Njqr_n.lqAK?pid=ImgGn', caption=f"Generated image for:",reply_to_message_id=message.id )
+#         if response.status_code == 200:
+#             data = response.json()
+#             images = data.get("response", {}).get("images", [])
+#             if images:
+#                 await i.delete()
+#                 media_group = []
+#                 for i, image in enumerate(images[:4]):  # Limit to 4 images
+#                     image_url = image.get("url")
                     
-                    # Download the image
-                    img_data = requests.get(image_url).content
-                    filename = f"image_{i}.jpg"
-                    with open(filename, "wb") as img_file:
-                        img_file.write(img_data)
+#                     # Download the image
+#                     img_data = requests.get(image_url).content
+#                     filename = f"image_{i}.jpg"
+#                     with open(filename, "wb") as img_file:
+#                         img_file.write(img_data)
                     
-                    # Append to media group
-                    media_group.append(InputMediaPhoto(filename, caption=f"Generated image for: {prompt}" if i == 0 else ""))
+#                     # Append to media group
+#                     media_group.append(InputMediaPhoto(filename, caption=f"Generated image for: {prompt}" if i == 0 else ""))
                 
                 
-                # Send the images as a media group
+#                 # Send the images as a media group
                 
-                await client.send_media_group(
-                    chat_id=message.chat.id,
-                    media=media_group,
-                    reply_to_message_id=message.id
-                )
-                for media in media_group:
-                        os.remove(media.media)
-        else:
-            await message.reply_text("Failed to generate the image. Try again later.")
-    except Exception as e:
-        await message.reply_text(f"An error occurred: {str(e)}")
+#                 await client.send_media_group(
+#                     chat_id=message.chat.id,
+#                     media=media_group,
+#                     reply_to_message_id=message.id
+#                 )
+#                 for media in media_group:
+#                         os.remove(media.media)
+#         else:
+#             await message.reply_text("Failed to generate the image. Try again later.")
+#     except Exception as e:
+#         await message.reply_text(f"An error occurred: {str(e)}")
 
 
 
@@ -479,7 +479,7 @@ async def extract_text_from_image(client, file_id):
         else:
             return "Failed to process the image. Please try again."
 
-@app.on_message(filters.command(["img2",'image2'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+@app.on_message(filters.command(["img","img2",'image2'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
 async def handle_bro(client, message):
     try:
         # Send initial response
@@ -643,77 +643,77 @@ async def handle_bro(client, message):
         await message.reply("Error:",r.status_code)
 
 # -------------------------------------------------
-genai.configure(api_key=API_KEY)
+# genai.configure(api_key=API_KEY)
 
-model = genai.GenerativeModel("gemini-1.5-flash-001")
-@app.on_message(filters.command(["gem",'gemini'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
-async def handle_bro(client, message):
-    # q=message.text.split(".gem", 1)[1].strip()
-    try:
-        # i = await message.reply_text("<code>Please Wait...</code>")
-        if len(message.command) > 1:
-         prompt = message.text.split(maxsplit=1)[1]
-        elif message.reply_to_message:
-         prompt = message.reply_to_message.text
-        else:
-         await message.reply_text(
-            f"<b>Usage: </b><code>.gem [prompt/reply to message]</code>"
-        )
-         return
+# model = genai.GenerativeModel("gemini-1.5-flash-001")
+# @app.on_message(filters.command(["gem",'gemini'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+# async def handle_bro(client, message):
+#     # q=message.text.split(".gem", 1)[1].strip()
+#     try:
+#         # i = await message.reply_text("<code>Please Wait...</code>")
+#         if len(message.command) > 1:
+#          prompt = message.text.split(maxsplit=1)[1]
+#         elif message.reply_to_message:
+#          prompt = message.reply_to_message.text
+#         else:
+#          await message.reply_text(
+#             f"<b>Usage: </b><code>.gem [prompt/reply to message]</code>"
+#         )
+#          return
     
-        chat = model.start_chat()
-        response = chat.send_message(prompt)
-        # i.delete()
+#         chat = model.start_chat()
+#         response = chat.send_message(prompt)
+#         # i.delete()
     
-        await message.reply_text(f"{response.text}", parse_mode=enums.ParseMode.MARKDOWN)
-    except Exception as e:
-        await message.reply_text(f"An error occurred: {str(e)}")
-# -------------------------------------------------
-@app.on_message(filters.command(["get",'info'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
-async def handle_bro(client, message):
-    try:
-        i = await message.reply_text("<code> Wait...</code>")
+#         await message.reply_text(f"{response.text}", parse_mode=enums.ParseMode.MARKDOWN)
+#     except Exception as e:
+#         await message.reply_text(f"An error occurred: {str(e)}")
+# # -------------------------------------------------
+# @app.on_message(filters.command(["get",'info'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+# async def handle_bro(client, message):
+#     try:
+#         i = await message.reply_text("<code> Wait...</code>")
 
-        base_img = await message.reply_to_message.download()
+#         base_img = await message.reply_to_message.download()
 
-        img = PIL.Image.open(base_img)
+#         img = PIL.Image.open(base_img)
 
-        response = model.generate_content(img)
-        # print(response)
-        await i.delete()
+#         response = model.generate_content(img)
+#         # print(response)
+#         await i.delete()
 
-        await message.reply_text(
-            f"**Detail Of Image:** {response.parts[0].text}", parse_mode=enums.ParseMode.MARKDOWN
-        )
-        os.remove(base_img)
-    except Exception as e:
-        await i.delete()
-        await message.reply_text(e)
+#         await message.reply_text(
+#             f"**Detail Of Image:** {response.parts[0].text}", parse_mode=enums.ParseMode.MARKDOWN
+#         )
+#         os.remove(base_img)
+#     except Exception as e:
+#         await i.delete()
+#         await message.reply_text(e)
 
-# -------------------------------------------------
-@app.on_message(filters.command(["cook",'aicook'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
-async def handle_bro(client, message):
-    try:
-        i = await message.reply_text("<code>Cooking...</code>")
+# # -------------------------------------------------
+# @app.on_message(filters.command(["cook",'aicook'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
+# async def handle_bro(client, message):
+#     try:
+#         i = await message.reply_text("<code>Cooking...</code>")
 
-        base_img = await message.reply_to_message.download()
+#         base_img = await message.reply_to_message.download()
 
-        img = PIL.Image.open(base_img)
-        cook_img = [
-        "Accurately identify the baked good in the image and provide an appropriate and recipe consistent with your analysis. ",
-        img,
-        ]
+#         img = PIL.Image.open(base_img)
+#         cook_img = [
+#         "Accurately identify the baked good in the image and provide an appropriate and recipe consistent with your analysis. ",
+#         img,
+#         ]
 
-        response = model_cook.generate_content(cook_img)
-        await i.delete()
+#         response = model_cook.generate_content(cook_img)
+#         await i.delete()
 
-        await message.reply_text(
-            f"{response.text}", parse_mode=enums.ParseMode.MARKDOWN
-        )
-        os.remove(base_img)
-    except Exception as e:
-        await i.delete()
-        await message.reply_text(e)
+#         await message.reply_text(
+#             f"{response.text}", parse_mode=enums.ParseMode.MARKDOWN
+#         )
+#         os.remove(base_img)
+#     except Exception as e:
+#         await i.delete()
+#         await message.reply_text(e)
 # -------------------------------------------------
 @app.on_message(filters.command(["down",'d'], prefixes=".") &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser)))
 async def handle_bro(client, message):
@@ -814,32 +814,33 @@ async def handle_bro(client, message):
         
         "**Text-related Commands:**\n"
         "1. `.ai` - ChatGPT response.\n"
-        "2. `.gem` / `.gemini` - Gemini AI response.\n"
-        "3. `.web` - Web access GPT.\n"
-        "4. `.b` - Unrestricted content.\n"
-        "5. `.air` - Add reply text and given text.\n"
+        "2. `.web` - Web access GPT.\n"
+        "3. `.air` - Add reply text and given text.\n"
+        "4. `.text` - Audio to text(reply to audio file).\n"
+        "5. `.audio` - text to audio(reply to text file).\n"
         "6. `.gita` - Bhagavad Gita response.\n"
-        "7. `.text` - Audio to text(reply to audio file).\n"
-        "8. `.talk` - AI response in audio format.\n\n"
+        # "2. `.gem` / `.gemini` - Gemini AI response.\n"
+        # "4. `.b` - Unrestricted content.\n"
+        # "8. `.talk` - AI response in audio format.\n\n"
 
         
-        "**Image-related Commands** :\n"
+        "\n**Image-related Commands** :\n"
         "1. `.img1` -for flux Image generation.\n"
         "2. `.img2` -for stable diffusion Image generation.\n"
-        "3. `.img3` -for dalle Image generation.\n"
-        "4. `.t` - Extract text from image.__(Reply to an image)__\n"
-        "5. `.get` / `.info` - Get information about image.__(Reply to an image)__\n"
-        "6. `.cook` - Get recipe for item in image.__(Reply to an image)__\n\n"
+        "3. `.t` - Extract text from image.__(Reply to an image)__\n"
+        # "3. `.img3` -for dalle Image generation.\n"
+        # "5. `.get` / `.info` - Get information about image.__(Reply to an image)__\n"
+        # "6. `.cook` - Get recipe for item in image.__(Reply to an image)__\n\n"
         
-        "**Other Commands:**\n"
-        "1. `.down` / `.d` - Download any video from a given URL __(e.g., Insta, X,fb,tiktok,snap,vimeo and so on)__.\n"
+        "**\nOther Commands:**\n"
+        '1. `.al` - Check if the bot is alive.\n'
         "2. `.num 9998881234` - Check phone number validation.\n"
         "3. `.tor Kalki 2898 AD` - Get Tor link for the query.\n"
-        "4. `.fact` - fact checker.\n"
-        "5. `.insta` - for instagram followers\n(not working)"
-        "6. `.quote` - Get a random quote.\n"
-        '7. `.al` - Check if the bot is alive.\n'
+        "4. `.fact hen or egg` - fact checker.\n"
+        "5. `.insta` - for instagram followers\n"
+        "7. `.quote` - Get a random quote.\n"
         "8. `.h`, `.help`, `.cmds` - Show this help message."
+        # "1. `.down` / `.d` - Download any video from a given URL __(e.g., Insta, X,fb,tiktok,snap,vimeo and so on)__.\n"
     )
     await message.reply(help_text)
 # @app.on_message(filters.private & ~filters.user(usee))
