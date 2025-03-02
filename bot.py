@@ -432,39 +432,39 @@ async def handle_bro(client, message):
 
 
 
-@app.on_message(filters.command(["img1",'image','image1'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
-async def handle_bro(client, message):
-    try:
-        i=await message.reply_text("<code>Wait...</code>")
+# @app.on_message(filters.command(["img1",'image','image1'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+# async def handle_bro(client, message):
+#     try:
+#         i=await message.reply_text("<code>Wait...</code>")
 
-        prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (message.reply_to_message.text if message.reply_to_message else None)
+#         prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (message.reply_to_message.text if message.reply_to_message else None)
         
-        if not prompt:
-            await i.delete()
-            return await message.reply_text("<b>Usage: </b><code>.img1 [prompt/reply to prompt]</code>")
+#         if not prompt:
+#             await i.delete()
+#             return await message.reply_text("<b>Usage: </b><code>.img1 [prompt/reply to prompt]</code>")
 
-        API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev"
-        headers = {"Authorization": "Bearer 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"}
-        response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+#         API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev"
+#         headers = {"Authorization": "Bearer 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"}
+#         response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
 
-        if response.status_code != 200:
-            return await message.reply("Failed to generate the image")
+#         if response.status_code != 200:
+#             return await message.reply("Failed to generate the image")
 
-        # Open image directly from the response content
-        image = Image.open(BytesIO(response.content))
+#         # Open image directly from the response content
+#         image = Image.open(BytesIO(response.content))
 
-        # Use BytesIO for in-memory file handling
-        temp_file = BytesIO()
-        image.save(temp_file, format="PNG")
-        temp_file.seek(0)
+#         # Use BytesIO for in-memory file handling
+#         temp_file = BytesIO()
+#         image.save(temp_file, format="PNG")
+#         temp_file.seek(0)
 
-        # Send the image back
-        await message.reply_photo(photo=temp_file, reply_to_message_id=message.id, caption=f"Flux model: {prompt}")
+#         # Send the image back
+#         await message.reply_photo(photo=temp_file, reply_to_message_id=message.id, caption=f"Flux model: {prompt}")
 
-        await i.delete()
+#         await i.delete()
 
-    except Exception as e:
-        await message.reply_text(f"An error occurred: {str(e)}")
+#     except Exception as e:
+#         await message.reply_text(f"An error occurred: {str(e)}")
 async def extract_text_from_image(client, file_id):
     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
         await client.download_media(file_id, file_name=temp_file.name)
@@ -479,47 +479,47 @@ async def extract_text_from_image(client, file_id):
         else:
             return "Failed to process the image. Please try again."
 
-@app.on_message(filters.command(["img","img2",'image2'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
-async def handle_bro(client, message):
-    try:
-        # Send initial response
-        i = await message.reply_text("<code>Wait...</code>")
+# @app.on_message(filters.command(["img","img2",'image2'], prefixes=".")  &  (filters.chat(idd) | filters.private | filters.user(usee) | filters.user(gcuser) ))
+# async def handle_bro(client, message):
+#     try:
+#         # Send initial response
+#         i = await message.reply_text("<code>Wait...</code>")
 
-        # Extract the prompt
-        prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (
-            message.reply_to_message.text if message.reply_to_message else None)
+#         # Extract the prompt
+#         prompt = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else (
+#             message.reply_to_message.text if message.reply_to_message else None)
 
-        if not prompt:
-            await i.delete()
-            return await message.reply_text("<b>Usage: </b><code>.img2 [prompt/reply to prompt]</code>")
+#         if not prompt:
+#             await i.delete()
+#             return await message.reply_text("<b>Usage: </b><code>.img2 [prompt/reply to prompt]</code>")
 
-        # Hugging Face API details
-        API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3.5-large"
-        headers = {"Authorization": "Bearer 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"}
+#         # Hugging Face API details
+#         API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3.5-large"
+#         headers = {"Authorization": "Bearer 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"}
 
-        # Make API request
-        response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+#         # Make API request
+#         response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
 
-        if response.status_code != 200:
-            await i.delete()
-            return await message.reply("Failed to generate the image.")
+#         if response.status_code != 200:
+#             await i.delete()
+#             return await message.reply("Failed to generate the image.")
 
-        # Process image directly from response content
-        image = Image.open(BytesIO(response.content))
+#         # Process image directly from response content
+#         image = Image.open(BytesIO(response.content))
 
-        # Use BytesIO to avoid disk I/O
-        temp_file = BytesIO()
-        image.save(temp_file, format="PNG")
-        temp_file.seek(0)
+#         # Use BytesIO to avoid disk I/O
+#         temp_file = BytesIO()
+#         image.save(temp_file, format="PNG")
+#         temp_file.seek(0)
 
-        # Reply with the generated image
-        await message.reply_photo(photo=temp_file, reply_to_message_id=message.id, caption=f"Stable Diffusion Model: {prompt}")
+#         # Reply with the generated image
+#         await message.reply_photo(photo=temp_file, reply_to_message_id=message.id, caption=f"Stable Diffusion Model: {prompt}")
 
-        # Cleanup
-        await i.delete()
+#         # Cleanup
+#         await i.delete()
 
-    except Exception as e:
-        await message.reply_text(f"An error occurred: {str(e)}")
+#     except Exception as e:
+#         await message.reply_text(f"An error occurred: {str(e)}")
 
 async def extract_text_from_image(client, file_id):
     with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
